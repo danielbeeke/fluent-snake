@@ -1,6 +1,6 @@
-import { FluentApi } from './types.ts'
+import { FluentApi, PreviousCall } from './types.ts'
 
-export const FluentSnake = (settings: Record<string, Function>, data: Promise<unknown> = Promise.resolve(), previousResults: Array<[string, Array<unknown>, unknown]> = []): FluentApi<typeof settings> => {
+export const FluentSnake = (settings: Record<string, Function>, data: Promise<unknown> | any = Promise.resolve(), previousResults: Array<PreviousCall> = []): FluentApi<typeof settings> => {
 
   const isPromise = typeof data === 'object' && typeof data?.then === 'function'
   const promisyfiedData = new Promise(resolve => resolve(data))

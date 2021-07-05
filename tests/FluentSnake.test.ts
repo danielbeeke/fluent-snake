@@ -1,50 +1,101 @@
 import { DOMParser, Element } from 'https://deno.land/x/deno_dom/deno-dom-wasm.ts'
 import { assertEquals } from 'https://deno.land/std@0.100.0/testing/asserts.ts'
 import { FluentSnake } from '../FluentSnake.ts'
-import { FluentApi } from '../types.ts'
+import { FluentApi, PreviousCall } from '../types.ts'
+
+type apiResponse = FluentApi<typeof settings>
 
 const settings = {
 
-  fetch: async function (url: string, previousResults: Array<[string, Array<unknown>, unknown]>) {
-    const response = await fetch(url)
-    return await response.text()
-  },
-
-  querySelector: async function (text: string, source: string, previousResults: Array<[string, Array<unknown>, unknown]>) {
-    const document = await new DOMParser().parseFromString(source, 'text/html')
-    if (!document) return
-    return document.querySelector(text)
-  },
-
-  href: async function (element: Element, previousResults: Array<[string, Array<unknown>, unknown]>) {
-    let baseUrl = null
-
-    for (const previousResult of await previousResults.reverse()) {
-      const [method, args]: [method: string, args: Array<unknown>, result: unknown] = previousResult
-      if (method === 'fetch') {
-        baseUrl = new URL(args[0] as string)
-        break;
-      }
+  fetch: async function (url: string) {
+    try {
+      const response = await fetch(url)
+      return await response.text()  
     }
-
-    return (baseUrl?.origin ?? '') + element.getAttribute('href')
+    catch (_exception: unknown) {
+      throw new Error(`Fetch: Could not fetch the URL`)
+    }    
   },
 
-  text: async function (element: Element, previousResults: Array<[string, Array<unknown>, unknown]>) {
+  querySelector: async function (text: string, source: string) {
+    try {
+      const document = await new DOMParser().parseFromString(source, 'text/html')
+      if (!document) return  
+      return document.querySelector(text)
+    }
+    catch (_exception: unknown) {
+      throw new Error('querySelector: Could not parse the previous result as HTML contents')
+    }
+  },
+
+  querySelectorAll: async function (text: string, source: string) {
+    try {
+      const document = await new DOMParser().parseFromString(source, 'text/html')
+      if (!document) return  
+      return document.querySelectorAll(text)
+    }
+    catch (_exception: unknown) {
+      console.log(_exception)
+      throw new Error('querySelector: Could not parse the previous result as HTML contents')
+    }
+  },
+
+  href: async function (element: Element, previousResults: Array<PreviousCall>) {
+    try {
+      let baseUrl = null
+
+      for (const previousResult of await previousResults.reverse()) {
+        const [method, args]: [method: string, args: Array<unknown>, result: unknown] = previousResult
+        if (method === 'fetch') {
+          baseUrl = new URL(args[0] as string)
+          break;
+        }
+      }
+  
+      if (!baseUrl) {
+        console.log(previousResults)
+      }
+
+      return (baseUrl?.origin ?? '') + element.getAttribute('href')  
+    }
+    catch (_exception: unknown) {
+      throw new Error('href: Could not return a valid URL')
+    }
+  },
+
+  text: async function (element: Element) {
     return await element.textContent
+  },
+
+  map: async function (callback: (item: unknown) => unknown, elements: Array<Element>, previousResults: Array<PreviousCall>) {
+    return await Promise.all([...elements].map(item => callback(FluentSnake(settings, item, [...previousResults]) as apiResponse)))
   }
 }
 
-const api = FluentSnake(settings) as FluentApi<typeof settings>
+const api = FluentSnake(settings) as apiResponse
 
-const response = await api
-.fetch('https://en.wikipedia.org/wiki/Linux')
-.querySelector('.infobox tr:nth-child(4) td a')
-.href()
-.fetch()
-.querySelector('#firstHeading')
-.text()
-
-Deno.test('Using FluentSnake on WikiPedia', () => {
+Deno.test('Using FluentSnake on WikiPedia', async () => {
+  const response = await api
+  .fetch('https://en.wikipedia.org/wiki/Linux')
+  .querySelector('.infobox tr:nth-child(4) td a')
+  .href()
+  .fetch()
+  .querySelector('#firstHeading')
+  .text()
+  
   assertEquals(response, 'Unix-like')
+});
+
+Deno.test('Using FluentSnake in with arrays on WikiPedia', async () => {
+  const responses = await api
+  .fetch('https://en.wikipedia.org/wiki/Linux')
+  .querySelectorAll('.infobox tr:nth-child(3) td a')
+  .map((item: apiResponse) => item
+    .href()
+    .fetch()
+    .querySelector('#firstHeading')
+    .text()
+  )
+
+  assertEquals(responses, ["C (programming language)", "Assembly language"])
 });

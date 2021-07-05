@@ -8,59 +8,34 @@ type apiResponse = FluentApi<typeof settings>
 const settings = {
 
   fetch: async function (url: string) {
-    try {
-      const response = await fetch(url)
-      return await response.text()  
-    }
-    catch (_exception: unknown) {
-      throw new Error(`Fetch: Could not fetch the URL`)
-    }    
+    const response = await fetch(url)
+    return await response.text()  
   },
 
   querySelector: async function (text: string, source: string) {
-    try {
-      const document = await new DOMParser().parseFromString(source, 'text/html')
-      if (!document) return  
-      return document.querySelector(text)
-    }
-    catch (_exception: unknown) {
-      throw new Error('querySelector: Could not parse the previous result as HTML contents')
-    }
+    const document = await new DOMParser().parseFromString(source, 'text/html')
+    if (!document) return  
+    return document.querySelector(text)
   },
 
   querySelectorAll: async function (text: string, source: string) {
-    try {
-      const document = await new DOMParser().parseFromString(source, 'text/html')
-      if (!document) return  
-      return document.querySelectorAll(text)
-    }
-    catch (_exception: unknown) {
-      console.log(_exception)
-      throw new Error('querySelector: Could not parse the previous result as HTML contents')
-    }
+    const document = await new DOMParser().parseFromString(source, 'text/html')
+    if (!document) return  
+    return document.querySelectorAll(text)
   },
 
   href: async function (element: Element, previousResults: Array<PreviousCall>) {
-    try {
-      let baseUrl = null
+    let baseUrl = null
 
-      for (const previousResult of await previousResults.reverse()) {
-        const [method, args]: [method: string, args: Array<unknown>, result: unknown] = previousResult
-        if (method === 'fetch') {
-          baseUrl = new URL(args[0] as string)
-          break;
-        }
+    for (const previousResult of await previousResults.reverse()) {
+      const [method, args]: [method: string, args: Array<unknown>, result: unknown] = previousResult
+      if (method === 'fetch') {
+        baseUrl = new URL(args[0] as string)
+        break;
       }
-  
-      if (!baseUrl) {
-        console.log(previousResults)
-      }
+    }
 
-      return (baseUrl?.origin ?? '') + element.getAttribute('href')  
-    }
-    catch (_exception: unknown) {
-      throw new Error('href: Could not return a valid URL')
-    }
+    return (baseUrl?.origin ?? '') + element.getAttribute('href')  
   },
 
   text: async function (element: Element) {

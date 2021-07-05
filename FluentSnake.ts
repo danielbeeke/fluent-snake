@@ -12,10 +12,30 @@ export const FluentSnake = (settings: Record<string, Function>, data: Promise<un
 
       if (prop === 'then') return (resolve: (thing: Promise<unknown>) => unknown) => resolve(target)
 
-      if (prop in settings) {
+      if (prop in settings || prop in Array.prototype) {
         const boundMethod = (...args: Array<unknown>) => targetWrap().then((resolved: unknown) => {
           const cleanedArgs = [...args.filter(item => item), resolved, previousResults]
-          return settings[prop.toString()].apply(target, cleanedArgs).then((currentResolved: unknown) => {
+
+          let method
+
+          /**
+           * Allows for the usage of Array methods.
+           */
+          if (prop in Array.prototype && !(prop in settings)) {
+            method = async function (callback: (item: unknown) => unknown, elements: Array<unknown>, previousResults: Array<PreviousCall>) {
+              /** @ts-ignore */
+              return await Promise.all([...elements][prop.toString()]((item: unknown) => callback(FluentSnake(settings, item, [...previousResults]))))
+            }
+          }
+
+          /**
+           * Methods that the developer gave.
+           */
+          else {
+            method = settings[prop.toString()]
+          }
+
+          return method.apply(target, cleanedArgs).then((currentResolved: unknown) => {
             previousResults.push([prop.toString(), args.filter(item => item), currentResolved])
             return currentResolved
           })

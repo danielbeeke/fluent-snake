@@ -67,9 +67,6 @@ const settings = {
     return await element.textContent
   },
 
-  map: async function (callback: (item: unknown) => unknown, elements: Array<Element>, previousResults: Array<PreviousCall>) {
-    return await Promise.all([...elements].map(item => callback(FluentSnake(settings, item, [...previousResults]) as apiResponse)))
-  }
 }
 
 const api = FluentSnake(settings) as apiResponse

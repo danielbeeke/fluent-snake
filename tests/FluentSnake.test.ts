@@ -5,34 +5,32 @@ import { FluentApi } from '../types.ts'
 
 const settings = {
 
-  fetch: async function (url: string, previousResult: Array<[string, Array<unknown>, unknown]>) {
+  fetch: async function (url: string, previousResults: Array<[string, Array<unknown>, unknown]>) {
     const response = await fetch(url)
     return await response.text()
   },
 
-  querySelector: async function (text: string, source: string, previousResult: Array<[string, Array<unknown>, unknown]>) {
+  querySelector: async function (text: string, source: string, previousResults: Array<[string, Array<unknown>, unknown]>) {
     const document = await new DOMParser().parseFromString(source, 'text/html')
     if (!document) return
     return document.querySelector(text)
   },
 
-  href: async function (element: Element, previousResult: Array<[string, Array<unknown>, unknown]>) {
+  href: async function (element: Element, previousResults: Array<[string, Array<unknown>, unknown]>) {
     let baseUrl = null
-    let index = await previousResult.length - 1
 
-    while (!baseUrl && index > -1) {
-      index--
-      const currentItem = previousResult[index]
-      if (currentItem[0] === 'fetch') {
-        const url = currentItem[1][0] as string
-        baseUrl = new URL(url)
+    for (const previousResult of await previousResults.reverse()) {
+      const [method, args]: [method: string, args: Array<unknown>, result: unknown] = previousResult
+      if (method === 'fetch') {
+        baseUrl = new URL(args[0] as string)
+        break;
       }
     }
 
     return (baseUrl?.origin ?? '') + element.getAttribute('href')
   },
 
-  text: async function (element: Element, previousResult: Array<[string, Array<unknown>, unknown]>) {
+  text: async function (element: Element, previousResults: Array<[string, Array<unknown>, unknown]>) {
     return await element.textContent
   }
 }
@@ -46,8 +44,6 @@ const response = await api
 .fetch()
 .querySelector('#firstHeading')
 .text()
-
-console.log(response)
 
 Deno.test('Using FluentSnake on WikiPedia', () => {
   assertEquals(response, 'Unix-like')

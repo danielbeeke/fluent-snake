@@ -24,7 +24,8 @@ export const FluentSnake = (settings: Record<string, Function>, data: Promise<un
           if (prop in Array.prototype && !(prop in settings)) {
             method = async function (callback: (item: unknown) => unknown, elements: Array<unknown>, previousResults: Array<PreviousCall>) {
               /** @ts-ignore */
-              return await Promise.all([...elements][prop.toString()]((item: unknown) => callback(FluentSnake(settings, item, [...previousResults]))))
+              const possiblePromises = [...elements][prop.toString()]((item: unknown) => callback(FluentSnake(settings, item, [...previousResults])))
+              return Array.isArray(possiblePromises) ? await Promise.all(possiblePromises) : await possiblePromises
             }
           }
 
@@ -43,6 +44,14 @@ export const FluentSnake = (settings: Record<string, Function>, data: Promise<un
 
         return (args: Array<unknown>) => FluentSnake(settings, boundMethod(args), previousResults)
       }
+
+      /**
+       * If the prop was not given as a function it may be a property of the object
+       */
+      const boundMethod = () => targetWrap().then((resolved: { [key: string]: unknown }) => {
+        if (resolved[prop.toString()]) return resolved[prop.toString()]
+      })
+      return FluentSnake(settings, boundMethod(), previousResults)
     }
   }) as unknown) as FluentApi<typeof settings>
 }

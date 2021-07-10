@@ -11,7 +11,6 @@ type user = {
   address: {
     street: string
   }
-  street: string
 }
 
 type apiResponse = FluentApi<typeof settings & user>

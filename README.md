@@ -2,7 +2,7 @@
 
 This library makes it possible to write API libraries that allow for:
 
-```
+```JavaScript
   const response = await api
   .fetch('https://en.wikipedia.org/wiki/Linux')
   .querySelector('.infobox tr:nth-child(4) td a')

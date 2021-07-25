@@ -1,5 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.101.0/testing/asserts.ts";
-import { api } from './TypedApi.ts'
+import { api } from './DummyApi.ts'
 
 Deno.test('Fetch users, get all streets', async () => {
   const streets = await api.users().map(async user => {

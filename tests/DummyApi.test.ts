@@ -36,3 +36,8 @@ Deno.test('Fetch users, find one, get todos', async () => {
   const todos = await api.users(9).todos()
   assertEquals(todos?.length, 20)
 })
+
+Deno.test('Get desktop logo, testing about a pluckable array by giving a string to search for', async () => {
+  const logo = await api.info().logo.desktop
+  assertEquals(logo, 'http://example.com/desktop-logo.png')
+})

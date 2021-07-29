@@ -1,7 +1,6 @@
 import { assertEquals } from "https://deno.land/std@0.101.0/testing/asserts.ts";
 import { api } from './ScrapingApi.ts'
 
-
 Deno.test('Using FluentSnake with scraping API on Wikipedia', async () => {
   const response = await api
   .fetch('https://en.wikipedia.org/wiki/Linux')

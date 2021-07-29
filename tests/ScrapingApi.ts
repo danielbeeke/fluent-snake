@@ -1,14 +1,9 @@
 import { DOMParser, Element, Node } from 'https://deno.land/x/deno_dom@v0.1.3-alpha2/deno-dom-wasm.ts'
-import { FluentSnake, PreviousCall } from '../FluentSnake.ts'
+import { FluentSnake, apiSingleResponse as apiSingleResponseBase, apiArrayResponse as apiArrayResponseBase, PreviousCall } from '../FluentSnake.ts'
 
-/**
- * A developer should make sure their given methods to FluentSnake have return types that are not promises although they should be in a JavaScript sense.
- * There is no simple way to let typescript understand a chain of promises as FluentSnake.
- * 
- * These types simplify the process of returning correct types.
- */
-export type apiSingleResponse<T> = typeof settings & T
-export type apiArrayResponse<T> = typeof settings & Array<typeof settings & T>
+type apiSingleResponse<T = unknown> = apiSingleResponseBase<typeof settings.methods, T>
+type apiArrayResponse<T = unknown> = apiArrayResponseBase<typeof settings.methods, T>
+
 
 const originalFetch = window.fetch
 export const fetch = function (url = '') {
@@ -46,5 +41,9 @@ export const text = function (element: Element = new Element('', null, [])) {
   return element.textContent as unknown as apiSingleResponse<string>
 }
 
-const settings = { fetch, querySelector, querySelectorAll, href, text }
-export const api = <typeof settings>FluentSnake(settings)
+const settings = {
+  methods: { fetch, querySelector, querySelectorAll, href, text },
+  pluckables: []
+}
+
+export const api = <apiSingleResponse>FluentSnake(settings)

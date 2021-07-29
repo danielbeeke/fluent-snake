@@ -1,4 +1,7 @@
-import { FluentSnake } from '../FluentSnake.ts'
+import { FluentSnake, apiSingleResponse as apiSingleResponseBase, apiArrayResponse as apiArrayResponseBase, apiPluckArray } from '../FluentSnake.ts'
+
+type apiSingleResponse<T = unknown> = apiSingleResponseBase<typeof settings.methods, T>
+type apiArrayResponse<T = unknown> = apiArrayResponseBase<typeof settings.methods, T>
 
 /**
  * These are types that are used with https://jsonplaceholder.typicode.com
@@ -26,15 +29,6 @@ type user = {
   }
 }
 
-/**
- * A developer should make sure their given methods to FluentSnake have return types that are not promises although they should be in a JavaScript sense.
- * There is no simple way to let typescript understand a chain of promises as FluentSnake.
- * 
- * These types simplify the process of returning correct types.
- */
-export type apiSingleResponse<T> = typeof settings & T
-export type apiArrayResponse<T> = typeof settings & Array<typeof settings & T>
-
 function todos (user: user | undefined = undefined) {
   return window.fetch(`https://jsonplaceholder.typicode.com/todos${user !== undefined ? `?userId=${user.id}` : ''}`)
   .then(response => response.json()) as unknown as apiArrayResponse<todo>
@@ -52,5 +46,14 @@ function trail (...args: Array<unknown>) {
   return args[1]
 }
 
-const settings = { users, todos, trail }
-export const api = <typeof settings>FluentSnake(settings)
+function info () {
+  return {
+    logo: ['http://example.com/mobile-logo.png', 'http://example.com/desktop-logo.png'] as apiPluckArray
+  }
+}
+
+const settings = { 
+  pluckables: [ 'logo' ],
+  methods: { users, todos, trail, info }
+}
+export const api = <apiSingleResponse>FluentSnake(settings)

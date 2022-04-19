@@ -30,14 +30,14 @@ type user = {
 }
 
 function todos (user: user | undefined = undefined) {
-  return window.fetch(`https://jsonplaceholder.typicode.com/todos${user !== undefined ? `?userId=${user.id}` : ''}`)
+  return globalThis.fetch(`https://jsonplaceholder.typicode.com/todos${user !== undefined ? `?userId=${user.id}` : ''}`)
   .then(response => response.json()) as unknown as apiArrayResponse<todo>
 }
 
 function users (id: number): apiSingleResponse<user>
 function users (id?: undefined): apiArrayResponse<user>
 function users (id: number | undefined = undefined) {
-  return window.fetch(`https://jsonplaceholder.typicode.com/users${id !== undefined ? `?id=${id}` : ''}`)
+  return globalThis.fetch(`https://jsonplaceholder.typicode.com/users${id !== undefined ? `?id=${id}` : ''}`)
   .then(response => response.json())
   .then(results => id !== undefined ? results[0] : results) as unknown
 }

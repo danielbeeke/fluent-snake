@@ -6,18 +6,36 @@ export type PreviousCall = [string, Array<unknown>, unknown]
  * 
  * These types simplify the process of returning correct types.
  */
- export type apiSingleResponse<M, T> = M & T
- export type apiArrayResponse<M, T> = M & Array<M & T>
- export type apiPluckArray = Array<string> & {
-   [key: string]: string
- }
+type base<S> = {
+  $state: S
+}
+
+export type apiSingleResponse<M = unknown, T = unknown, S = unknown> = M & T & base<S>
+export type apiArrayResponse<M = unknown, T = unknown, S = unknown> = M & Array<M & T> & base<S>
+export type apiPluckArray = Array<string> & {
+  [key: string]: string
+}
+
+const defaultSettings = {
+  methods: {}, 
+  getters: {}, 
+  pluckables: [],
+  state: {}
+}
 
 export const FluentSnake = (settings: {
-  methods: { [key: string]: Function }, 
-  pluckables: Array<string>
+  methods?: { [key: string]: Function }, 
+  getters?: { [key: string]: any }, 
+  pluckables?: Array<string>
+  state?: any
+} = {
+  methods: {}, 
+  getters: {}, 
+  pluckables: [],
+  state: {}
 }, data: Promise<unknown> = Promise.resolve() as any, previousResults: Array<PreviousCall> = [], ignoreOneAwait = false, parentIsProperty = false): any => {
-
-  const { methods, pluckables } = settings
+  const { methods, pluckables, getters } = Object.assign(defaultSettings, settings)
+  if (!settings.state) settings.state = {}
   const recurse = (data: any, ignoreOneAwait = false, parentIsProperty = false) => FluentSnake(settings, data, [...previousResults], ignoreOneAwait, parentIsProperty)
 
   /**
@@ -28,8 +46,10 @@ export const FluentSnake = (settings: {
   const isPromise = typeof data === 'object' && 'then' in data && typeof data?.then === 'function'
   const promisyfiedData = new Promise(resolve => resolve(data))
 
-  return new Proxy(isPromise ? data : promisyfiedData as Promise<{[key: string]: unknown}>, {
+  const proxy: any = new Proxy(isPromise ? data : promisyfiedData as Promise<{[key: string]: unknown}>, {
     get: function(target: Promise<{[key: string]: unknown}>, prop: string | symbol) {
+
+      if (prop === '$state') return settings.state
 
       /**
        * Using await calls 'then()' until a false is returned.
@@ -106,10 +126,23 @@ export const FluentSnake = (settings: {
       }
 
       /**
+       * If the prop is inside the getters.
+       */
+      if (prop.toString() in getters) {
+        const getterDefinition = Object.getOwnPropertyDescriptor(getters, prop.toString())
+
+        if (getterDefinition?.get) {
+          return getterDefinition.get.apply(settings)
+        }
+      }
+
+      /**
        * If the prop was not found here it may be a dynamicly loaded property
        */
       const boundProperty = target.then((resolved) => recurse(resolved[prop.toString()]))
       return recurse(boundProperty)
     }
-  }) as unknown
+  })
+  
+  return proxy as unknown
 }

@@ -17,7 +17,7 @@ Deno.test('Using FluentSnake with arrays scraping API on Wikipedia', async () =>
   const responses = await api
   .fetch('https://en.wikipedia.org/wiki/Linux')
   .querySelectorAll('.infobox tr:nth-child(3) td a')
-  .map((item) => item
+  .map((item: any) => item
     .href()
     .fetch()
     .querySelector('#firstHeading')

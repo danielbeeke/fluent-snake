@@ -1,7 +1,7 @@
 import { FluentSnake, apiSingleResponse as apiSingleResponseBase, apiArrayResponse as apiArrayResponseBase, apiPluckArray } from '../FluentSnake.ts'
 
-type apiSingleResponse<T = unknown> = apiSingleResponseBase<typeof settings.methods, T>
-type apiArrayResponse<T = unknown> = apiArrayResponseBase<typeof settings.methods, T>
+type apiSingleResponse<T = unknown> = apiSingleResponseBase<typeof settings.methods & typeof settings.getters, T, typeof settings.state>
+type apiArrayResponse<T = unknown> = apiArrayResponseBase<typeof settings.methods & typeof settings.getters, T, typeof settings.state>
 
 /**
  * These are types that are used with https://jsonplaceholder.typicode.com
@@ -54,6 +54,16 @@ function info () {
 
 const settings = { 
   pluckables: [ 'logo' ],
-  methods: { users, todos, trail, info }
+  getters: {
+    get stale () {
+      settings.state.allowStale = true
+      return api       
+    }
+  }, 
+  methods: { users, todos, trail, info },
+  state: {
+    allowStale: false
+  }
 }
+
 export const api = <apiSingleResponse>FluentSnake(settings)

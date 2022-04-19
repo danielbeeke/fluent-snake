@@ -42,3 +42,9 @@ Deno.test('Get desktop logo, testing about a pluckable array by giving a string 
 
   assertEquals(logo, 'http://example.com/desktop-logo.png')
 })
+
+Deno.test('Setting via a property', async () => {
+  const logo = await api.stale.info().logo.desktop
+  assertEquals(logo, 'http://example.com/desktop-logo.png')
+  assertEquals(api.$state.allowStale, true)
+})

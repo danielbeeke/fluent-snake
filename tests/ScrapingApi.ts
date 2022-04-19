@@ -1,13 +1,13 @@
 import { DOMParser, Element, Node } from 'https://deno.land/x/deno_dom@v0.1.3-alpha2/deno-dom-wasm.ts'
 import { FluentSnake, apiSingleResponse as apiSingleResponseBase, apiArrayResponse as apiArrayResponseBase, PreviousCall } from '../FluentSnake.ts'
 
-type apiSingleResponse<T = unknown> = apiSingleResponseBase<typeof settings.methods, T>
-type apiArrayResponse<T = unknown> = apiArrayResponseBase<typeof settings.methods, T>
+
+type apiSingleResponse<T = unknown> = apiSingleResponseBase<typeof settings.methods & typeof settings.getters, T, typeof settings.state>
+type apiArrayResponse<T = unknown> = apiArrayResponseBase<typeof settings.methods & typeof settings.getters, T, typeof settings.state>
 
 
-const originalFetch = window.fetch
 export const fetch = function (url = '') {
-  return originalFetch(url).then(response => response.text()) as unknown as apiSingleResponse<string>
+  return globalThis.fetch(url).then(response => response.text()) as unknown as apiSingleResponse<string>
 }
 
 export const querySelector = function (text: string, source = '') {
@@ -42,7 +42,9 @@ export const text = function (element: Element = new Element('', null, [])) {
 }
 
 const settings = {
+  state: {},
   methods: { fetch, querySelector, querySelectorAll, href, text },
+  getters: {},
   pluckables: []
 }
 

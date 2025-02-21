@@ -17,12 +17,12 @@ Deno.test('Using FluentSnake with arrays scraping API on Wikipedia', async () =>
   const responses = await api
   .fetch('https://en.wikipedia.org/wiki/Linux')
   .querySelectorAll('.infobox tr:nth-child(3) td a')
-  .map((item: any) => item
+  .map((item) => item
     .href()
     .fetch()
     .querySelector('#firstHeading')
     .text()
   )
 
-  assertEquals(responses, ['C (programming language)', 'Assembly language'])
+  assertEquals(responses, ['C (programming language)', 'Assembly language', 'Rust (programming language)'])
 });

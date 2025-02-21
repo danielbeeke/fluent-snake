@@ -2,8 +2,8 @@ import { DOMParser, Element, Node } from 'https://deno.land/x/deno_dom@v0.1.3-al
 import { FluentSnake, apiSingleResponse as apiSingleResponseBase, apiArrayResponse as apiArrayResponseBase, PreviousCall } from '../FluentSnake.ts'
 
 
-type apiSingleResponse<T = unknown> = apiSingleResponseBase<typeof settings.methods & typeof settings.getters, T, typeof settings.state>
-type apiArrayResponse<T = unknown> = apiArrayResponseBase<typeof settings.methods & typeof settings.getters, T, typeof settings.state>
+type apiSingleResponse<T = unknown> = apiSingleResponseBase<typeof settings.methods & typeof settings.getters, T>
+type apiArrayResponse<T = unknown> = apiArrayResponseBase<typeof settings.methods & typeof settings.getters, T>
 
 
 export const fetch = function (url = '') {
@@ -42,10 +42,8 @@ export const text = function (element: Element = new Element('', null, [])) {
 }
 
 const settings = {
-  state: {},
   methods: { fetch, querySelector, querySelectorAll, href, text },
-  getters: {},
-  pluckables: []
+  getters: {}
 }
 
 export const api = <apiSingleResponse>FluentSnake(settings)

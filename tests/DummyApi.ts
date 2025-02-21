@@ -1,7 +1,7 @@
-import { FluentSnake, apiSingleResponse as apiSingleResponseBase, apiArrayResponse as apiArrayResponseBase, apiPluckArray } from '../FluentSnake.ts'
+import { FluentSnake, apiSingleResponse as apiSingleResponseBase, apiArrayResponse as apiArrayResponseBase } from '../FluentSnake.ts'
 
-type apiSingleResponse<T = unknown> = apiSingleResponseBase<typeof settings.methods & typeof settings.getters, T, typeof settings.state>
-type apiArrayResponse<T = unknown> = apiArrayResponseBase<typeof settings.methods & typeof settings.getters, T, typeof settings.state>
+type apiSingleResponse<T = unknown> = apiSingleResponseBase<typeof settings.methods & typeof settings.getters, T>
+type apiArrayResponse<T = unknown> = apiArrayResponseBase<typeof settings.methods & typeof settings.getters, T>
 
 /**
  * These are types that are used with https://jsonplaceholder.typicode.com
@@ -35,7 +35,7 @@ function todos (user: user | undefined = undefined) {
 }
 
 function users (id: number): apiSingleResponse<user>
-function users (id?: undefined): apiArrayResponse<user>
+function users (id?: never): apiArrayResponse<user>
 function users (id: number | undefined = undefined) {
   return globalThis.fetch(`https://jsonplaceholder.typicode.com/users${id !== undefined ? `?id=${id}` : ''}`)
   .then(response => response.json())
@@ -46,24 +46,9 @@ function trail (...args: Array<unknown>) {
   return args[1]
 }
 
-function info () {
-  return {
-    logo: ['http://example.com/mobile-logo.png', 'http://example.com/desktop-logo.png'] as apiPluckArray
-  }
-}
-
 const settings = { 
-  pluckables: [ 'logo' ],
-  getters: {
-    get stale () {
-      settings.state.allowStale = true
-      return api       
-    }
-  }, 
-  methods: { users, todos, trail, info },
-  state: {
-    allowStale: false
-  }
+  methods: { users, todos, trail },
+  getters: {},
 }
 
 export const api = <apiSingleResponse>FluentSnake(settings)

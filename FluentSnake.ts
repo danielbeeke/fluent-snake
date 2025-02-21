@@ -7,35 +7,24 @@ export type PreviousCall = [string, Array<unknown>, unknown]
  * These types simplify the process of returning correct types.
  */
 type base<S> = {
-  $state: S
 }
 
 export type apiSingleResponse<M = unknown, T = unknown, S = unknown> = M & T & base<S>
 export type apiArrayResponse<M = unknown, T = unknown, S = unknown> = M & Array<M & T> & base<S>
-export type apiPluckArray = Array<string> & {
-  [key: string]: string
-}
 
 const defaultSettings = {
   methods: {}, 
-  getters: {}, 
-  pluckables: [],
-  state: {}
+  getters: {},
 }
 
 export const FluentSnake = (settings: {
   methods?: { [key: string]: Function }, 
   getters?: { [key: string]: any }, 
-  pluckables?: Array<string>
-  state?: any
 } = {
   methods: {}, 
   getters: {}, 
-  pluckables: [],
-  state: {}
 }, data: Promise<unknown> = Promise.resolve() as any, previousResults: Array<PreviousCall> = [], ignoreOneAwait = false, parentIsProperty = false): any => {
-  const { methods, pluckables, getters } = Object.assign(defaultSettings, settings)
-  if (!settings.state) settings.state = {}
+  const { methods, getters } = Object.assign(defaultSettings, settings)
   const recurse = (data: any, ignoreOneAwait = false, parentIsProperty = false) => FluentSnake(settings, data, [...previousResults], ignoreOneAwait, parentIsProperty)
 
   /**
@@ -48,9 +37,6 @@ export const FluentSnake = (settings: {
 
   const proxy: any = new Proxy(isPromise ? data : promisyfiedData as Promise<{[key: string]: unknown}>, {
     get: function(target: Promise<{[key: string]: unknown}>, prop: string | symbol) {
-
-      if (prop === '$state') return settings.state
-
       /**
        * Using await calls 'then()' until a false is returned.
        * If we want to return Proxy objects that have a then method we need a mechanism that will protect the promise from bein unwrapped when returning the proxy.
@@ -101,14 +87,6 @@ export const FluentSnake = (settings: {
         })
 
         return (args: Array<unknown>) => FluentSnake(settings, boundMethod(args), previousResults)
-      }
-
-      /**
-       * If it is a property we support we recurse into it and tell the next proxy to search for items inside arrays.
-       */
-      if (pluckables.includes(prop.toString())) {
-        const boundProperty = target.then((resolved) => recurse(resolved[prop.toString()]))
-        return recurse(boundProperty, false, true)
       }
 
       /**
